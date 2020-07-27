@@ -1,2 +1,2 @@
 # KinatestGalaxyFisherTest
-kinatest on galaxy using fisher's exact test
+This is the 1-click version of KT-ID, which works on GalaxyP, using fisher scoring functions
