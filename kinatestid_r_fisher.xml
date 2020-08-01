@@ -9,7 +9,7 @@
         ln -s '$SBF' SBF.csv &&
         ln -s '$__tool_directory__/screener7-7.csv' screener &&
         ln -s '$__tool_directory__/OnlyTheRequiredSubBackFreqData.RData' thedata.RData &&
-        Rscript '$__tool_directory__/7-7-fisher-galaxy_working.R'
+        Rscript '$__tool_directory__/7-7-fisher-galaxy.R'
     ]]></command>
     <inputs>
         <param format="csv" name="substrates" type="data" label="Positive/Phosphorylated Substrate List"/>
