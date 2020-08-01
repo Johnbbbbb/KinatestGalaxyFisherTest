@@ -1,5 +1,5 @@
 #the Galaxy tool will error out if the system displays a warning, even if that warning does not cause the code to fail
-#in order to ensure that the tool does not error out due to a simple Warning, I turn down the warning option to ignore warnings
+#in order to ensure that the tool does not error out due to a simple Warning, This turns down the warning option to ignore warnings
 oldw <- getOption("warn")
 options(warn = -1)
 
@@ -34,12 +34,12 @@ for (i in 2:nrow(PositiveSubstrateList))
   substrates[j,1:15]<-substratemotif
 }
 
-#any blank spots on the substrates list are places where there was no Amino Acid, so I give them the letter O.
+#any blank spots on the substrates list are places where there was no Amino Acid, so they are given the letter O.
 substrates2<-substrates
 substrates2[substrates2==""]<-"O"
 
 
-#I create the percent table here, which finds what percertage of each amino acid was present at each position in the substrates, from -7 to +7
+#the percent table is created here, which finds what percertage of each amino acid was present at each position in the substrates, from -7 to +7
 if (1==1){
 Column1<-substrates[,1]
 Column2<-substrates[,2]
@@ -418,9 +418,9 @@ YllYs<-cbind(Y1,Y2,Y3,Y4,Y5,Y6,Y7,Y8,Y9,Y10,Y11,Y12,Y13,Y14,Y15)
 PercentTable<-rbind(AllAs,CllCs,DllDs,EllEs,FllFs,GllGs,HllHs,IllIs,KllKs,LllLs,MllMs,NllNs,PllPs,QllQs,RllRs,SllSs,TllTs,VllVs,WllWs,YllYs,OllOs)
 }
 
-#this is where I'm creating the new SubBackFreq table, I have a list with all possible SBF matrices,
-#I perform a for function to find all the matrices that are in Substrate Background Frequency
-#and place them all in this array, then I will do mean and SD
+#this is where the new SubBackFreq table is created, there is a list with all possible SBF matrices,
+#the following code performs a for function to find all the matrices that are in Substrate Background Frequency
+#and place them all in this array, then it will do mean and SD
 AllSubBackFreq<-array(data = NA,dim = c(21,15,nrow(SubstrateBackgroundFrequency)))
 
 AAccessionNumbers<-SubstrateBackgroundFrequency[,1]
@@ -439,7 +439,7 @@ for (z in 1:length(AAccessionNumbers)) { #for every protein found in the substra
     for (a in 1:length(motifs)) {
       thecut<-unlist(strsplit(motifs[a], split=""))
       edges<-c("O","O","O","O","O","O","O")
-      thecut<-c(edges,thecut,edges)#and replace blank spaces in the -7 to +7 motif with Os, same as what I did for the positive substrates
+      thecut<-c(edges,thecut,edges) #and replace blank spaces in the -7 to +7 motif with Os, same as what I did for the positive substrates
       theYs<-which(thecut=="Y") 
       for (q in 1:length(theYs)) {
         thiscut<-thecut[(theYs[q]-7):(theYs[q]+7)]
@@ -635,7 +635,7 @@ NormalizationScore<-c("Normalization Score",NormalizationScore)
 write.table(NormalizationScore, file = SiteSelectivityTable_EndogenousProbabilityMatrix_NormalizationScore_CharacterizationTable, append = TRUE,sep = ",",row.names = FALSE, col.names = FALSE)
 
 
-#take the Fisher Odds table but only that those odds, remove the labels that I put of them
+#take the Fisher Odds table but only that those odds, remove the labels that were put on them
 bareSDs<-fisherupdown[1:20,2:16]
 bareSDs[20,8]<-3
 bareSDs[3:4,2]<-1
@@ -668,7 +668,7 @@ V=18
 W=19
 Y=20
 
-#this function converts letters to a number based on the equalities that I have written above
+#this function converts letters to a number based on the equalities that are written above
 #so aa_props(c(A,C,D)) will give c(1,2,3) as an answer
 aa_props <- c("A"=A, "C"=C, "D"=D, "E"=E, "F"=F,"G"=G,"H"=H,"I"=I,"K"=K,"L"=L,"M"=M,"N"=N,"P"=P,"Q"=Q,"R"=R,
               "S"=S,"T"=T,"V"=V,"W"=W,"Y"=Y,"xY"=Y,"O"=21)
@@ -678,7 +678,7 @@ ThisKinTable<-fisheroddstable
 NegativeScores<-rep(NA,times=nrow(NegativeSubstrateList))
 NegativeWeirdScores<-rep(NA,times=nrow(NegativeSubstrateList))
 
-#here I am going to take all of the Negative motifs and score them, according to the Fisher Odds Tables and the statistics of KINATEST-ID
+#here all of the Negative motifs are scored, according to the Fisher Odds Tables and the statistics of KINATEST-ID
 for (v in 1:nrow(NegativeSubstrateList)) {
   motif<-NegativeSubstrateList[v,2]
   motif<-unlist(strsplit(motif,""))
@@ -704,7 +704,7 @@ NegativeWithScores<-cbind(negativesubstrates,as.character(NegativeScores),as.cha
 PositiveScores<-rep(NA,times=nrow(PositiveSubstrateList))
 PositiveWeirdScores<-rep(NA,times=nrow(PositiveSubstrateList))
 
-#now I'm going to score all of the positive motifs, according to the same statistics
+#now all of the positive motifs are scored, according to the same statistics
 for (v in 1:nrow(PositiveSubstrateList)) {
   motif<-PositiveSubstrateList[v,4:18]
   motif<-unlist(motif)
@@ -766,8 +766,8 @@ F_One<-c(1:120)
 F_Two<-c(1:120)
 FalsePositiveRate<-c(1:120)
 
-#here I am creating the Matthew's Correlation Coefficient table for each posible threshold value that could be used to separate negative motifs from positive motifs
-#these statistics allow us to determine the best threshold value
+#here is created the Matthew's Correlation Coefficient table for each posible threshold value that could be used to separate negative motifs from positive motifs
+#these statistics allow one to determine the best threshold value
 for (z in 1:120) {
   thres<-threshold[z]
   Truepositives[z]<-length(PositiveWeirdScores[PositiveWeirdScores>=(thres)])
