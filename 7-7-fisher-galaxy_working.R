@@ -1,47 +1,42 @@
-oldw <- getOption("warn")
-options(warn = -1)
 #the Galaxy tool will error out if the system displays a warning, even if that warning does not cause the code to fail
 #in order to ensure that the tool does not error out due to a simple Warning, I turn down the warning option to ignore warnings
+oldw <- getOption("warn")
+options(warn = -1)
 
+#this takes in all the inputs and ensures they are oriented correctly
 PositiveSubstrateList<- read.csv("substrates.csv", stringsAsFactors=FALSE)
 NegativeSubstrateList<- read.csv("negatives.csv", stringsAsFactors=FALSE)
 SubstrateBackgroundFrequency<- read.csv("SBF.csv", stringsAsFactors=FALSE,header = FALSE)
 SubstrateBackgroundFrequency<-t(SubstrateBackgroundFrequency)
 SubstrateBackgroundFrequency<-SubstrateBackgroundFrequency[2:nrow(SubstrateBackgroundFrequency),]
-#this takes in all the inputs and ensures they are oriented correctly
 
-ScreenerFilename<-"screener"
-screaner<-read.csv(ScreenerFilename, header = FALSE, stringsAsFactors = FALSE)
-#the screener file is packaged with the tool and is used for actually not for anything
-
-DataFilename<-"thedata.RData"
-load(DataFilename)
 #this is a data file containing a list called Genelist
 #genelist is a list of every single Uniprot-Swissprot protein in the human genome
 #and those proteins are then *in-silico* digested by trypsin, and any Y-containing tryptic peptides go in the list called GeneList
 #so GeneList is a list of all Y-containing tryptic peptides from the human proteome
+DataFilename<-"thedata.RData"
+load(DataFilename)
 
+#these are the names of the output files that will be generated
 SDtableAndPercentTable<-"output1.csv"
 NormalizationScore_CharacterizationTable<-"output2.csv"
 SequenceScoringAndScreening<-"output3.csv"
-#these are the names of the output files that will be generated
 
-substrates<-matrix(rep("A",times=((nrow(PositiveSubstrateList)-1)*15)),ncol = 15)
 #an "empty" matrix will gets filled below.  This matrix will contain all the letters of the input Positive Substrates
+substrates<-matrix(rep("A",times=((nrow(PositiveSubstrateList)-1)*15)),ncol = 15)
 
 for (i in 2:nrow(PositiveSubstrateList))
 {
   substratemotif<-PositiveSubstrateList[i,4:18]
   substratemotif[8]<-"Y"
-  #substratemotif<-paste(substratemotif,sep = "",collapse = "")
   j=i-1
   substratemotif<-unlist(substratemotif)
   substrates[j,1:15]<-substratemotif
 }
 
+#any blank spots on the substrates list are places where there was no Amino Acid, so I give them the letter O.
 substrates2<-substrates
 substrates2[substrates2==""]<-"O"
-#any blank spots on the substrates list are places where there was no Amino Acid, so I give them the letter O.
 
 
 #I create the percent table here, which finds what percertage of each amino acid was present at each position in the substrates, from -7 to +7
@@ -423,39 +418,33 @@ YllYs<-cbind(Y1,Y2,Y3,Y4,Y5,Y6,Y7,Y8,Y9,Y10,Y11,Y12,Y13,Y14,Y15)
 PercentTable<-rbind(AllAs,CllCs,DllDs,EllEs,FllFs,GllGs,HllHs,IllIs,KllKs,LllLs,MllMs,NllNs,PllPs,QllQs,RllRs,SllSs,TllTs,VllVs,WllWs,YllYs,OllOs)
 }
 
-AllSubBackFreq<-array(data = NA,dim = c(21,15,nrow(SubstrateBackgroundFrequency)))
 #this is where I'm creating the new SubBackFreq table, I have a list with all possible SBF matrices,
 #I perform a for function to find all the matrices that are in Substrate Background Frequency
 #and place them all in this array, then I will do mean and SD
+AllSubBackFreq<-array(data = NA,dim = c(21,15,nrow(SubstrateBackgroundFrequency)))
 
 AAccessionNumbers<-SubstrateBackgroundFrequency[,1]
 AllGeneNames<-names(Genelist)
 
 number_replaced<-0
 totalmotifs<-0
-for (z in 1:length(AAccessionNumbers)) {
-  #for every protein found in the substrate background frequency list
+for (z in 1:length(AAccessionNumbers)) { #for every protein found in the substrate background frequency list
   pattern<-AAccessionNumbers[z]
-  referencepoint<-grepl(pattern = pattern, x=AllGeneNames,fixed = TRUE)
-  #find that protein in the GeneList list
+  referencepoint<-grepl(pattern = pattern, x=AllGeneNames,fixed = TRUE) #find that protein in the GeneList list
   referencenumber<-which(referencepoint==TRUE)
   if (length(referencenumber)<1){referencenumber<-FALSE}
-  if (referencenumber!=FALSE){
-    #then if you have actually found a match in the GeneList list, you will do the following
-    motifs<-unlist(Genelist[[referencenumber]])
-    #take every tryptic peptide from that list
+  if (referencenumber!=FALSE){ #then if you have actually found a match in the GeneList list, you will do the following
+    motifs<-unlist(Genelist[[referencenumber]]) #take every tryptic peptide from that list
     therow<-c(1:15)
     for (a in 1:length(motifs)) {
       thecut<-unlist(strsplit(motifs[a], split=""))
       edges<-c("O","O","O","O","O","O","O")
-      thecut<-c(edges,thecut,edges)
-      theYs<-which(thecut=="Y")
-      #and use the above code to replace blank spaces in the -7 to +7 motif with Os, same as what I did for the positive substrates
+      thecut<-c(edges,thecut,edges)#and replace blank spaces in the -7 to +7 motif with Os, same as what I did for the positive substrates
+      theYs<-which(thecut=="Y") 
       for (q in 1:length(theYs)) {
         thiscut<-thecut[(theYs[q]-7):(theYs[q]+7)]
         therow<-rbind(therow,thiscut)
-        totalmotifs<-totalmotifs+1
-        #count how many motifs you've put in there
+        totalmotifs<-totalmotifs+1 #count how many motifs you've put in there
       }
     }
     
@@ -468,16 +457,18 @@ for (z in 1:length(AAccessionNumbers)) {
         positivesubstrate<-substrates2[v,1:15]
         positivesubstrate<-paste(positivesubstrate,sep = "",collapse = "")
         
+        #if any of the substrates found in the substrate background frequency are identical to the positive substrates, this removes them
+        #and replaces them with Xs to ensure they do not get counted when all the AAs are being counted
         if (compare1==positivesubstrate){
           therow[t,1:15]<-cutreplacement
           number_replaced<-number_replaced+1
-          #if any of the substrates found in the substrate background frequency are identical to the positive substrates, this removes them
-          #and replaces them with Xs to ensure they do not get counted when all the AAs are being counted
           }
       }
       
     }
     
+    #split the motifs you found above into individual columns
+    #each column is ome of the positions between -7 and +7, and so each column represents every single amino acid found at that position
     Column1<-therow[,1]
     Column2<-therow[,2]
     Column3<-therow[,3]
@@ -493,14 +484,12 @@ for (z in 1:length(AAccessionNumbers)) {
     Column13<-therow[,13]
     Column14<-therow[,14]
     Column15<-therow[,15]
-    #split the motifs you found above into individual columns
-    #each column is ome of the positions between -7 and +7, and so each column represents every single amino acid found at that position
+    #count how many of each amino acid were present in that column, the vector of "how many of each amino acid were present in Column1", the name of that vector is slice1
     slice1<-c(sum(Column1=="A"),sum(Column1=="C"),sum(Column1=="D"),sum(Column1=="E"),sum(Column1=="F"),
               sum(Column1=="G"),sum(Column1=="H"),sum(Column1=="I"),sum(Column1=="K"),sum(Column1=="L"),
               sum(Column1=="M"),sum(Column1=="N"),sum(Column1=="P"),sum(Column1=="Q"),sum(Column1=="R"),
               sum(Column1=="S"),sum(Column1=="T"),sum(Column1=="V"),sum(Column1=="W"),sum(Column1=="Y"),
               sum(Column1=="O"))
-    #count how many of each amino acid were present in that column, the vector of "how many of each amino acid were present in Column1", the name of that vector is slice1
     slice2<-c(sum(Column2=="A"),sum(Column2=="C"),sum(Column2=="D"),sum(Column2=="E"),sum(Column2=="F"),
               sum(Column2=="G"),sum(Column2=="H"),sum(Column2=="I"),sum(Column2=="K"),sum(Column2=="L"),
               sum(Column2=="M"),sum(Column2=="N"),sum(Column2=="P"),sum(Column2=="Q"),sum(Column2=="R"),
@@ -571,37 +560,35 @@ for (z in 1:length(AAccessionNumbers)) {
               sum(Column15=="M"),sum(Column15=="N"),sum(Column15=="P"),sum(Column15=="Q"),sum(Column15=="R"),
               sum(Column15=="S"),sum(Column15=="T"),sum(Column15=="V"),sum(Column15=="W"),sum(Column15=="Y"),
               sum(Column15=="O"))
+    #stick all those slices together in a matrix
     ThisMatix<-cbind(slice1,slice2,slice3,slice4,slice5,slice6,slice7,slice8,slice9,
                      slice10,slice11,slice12,slice13,slice14,slice15)
     ThisMatix<-ThisMatix
-    #stick all those slices together in a matrix
-    AllSubBackFreq[1:21,1:15,z]<-ThisMatix
     #add that matrix to the 3d matrix of substratebackgroundfrequency
     #the full matrix is a 3d matrix.  The Z dimension represents each Accession Number aka protein, the Y dimension represents 
     #each of the 20 amino acids plus O which is AA number 21, and the X dimension represents the positions -7 to +7
+    AllSubBackFreq[1:21,1:15,z]<-ThisMatix
   }
 }
 
-theletters<-c("A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y","O")
-#these are the 20 AAs of the code plus O which represents "no amino acid present here"
+theletters<-c("A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y","O") #these are the 20 AAs of the code plus O which represents "no amino acid present here"
 
-SumSBF<-apply(AllSubBackFreq, c(1,2), sum, na.rm=TRUE)
-#the 3d matrix above is summed across its Z dimension
+SumSBF<-apply(AllSubBackFreq, c(1,2), sum, na.rm=TRUE) #the 3d matrix above is summed across its Z dimension
 
 
+#pre-allocate vectors
 fisheroddstable<-matrix(data = 1,nrow = 21,ncol = 15)
 fisherpvalstable<-matrix(data = 1,nrow = 21,ncol = 15)
 fisherpvalstableadjusted<-matrix(data = 1,nrow = 21,ncol = 15)
-#pre-allocate vectors
 
+#for each of the 20 AAs plus O
 for (rowas in 1:21) {
-  #for each of the 20 AAs plus O
+  #for each position -7 to +7
   for (colams in 1:15) {
-    #for each position -7 to +7
-    fishermatrix<-matrix(data=c(PercentTable[rowas,colams],nrow(substrates),SumSBF[rowas,colams],(totalmotifs-number_replaced)),nrow = 2)
-    thetest<-fisher.test(x=fishermatrix)
     #perform a Fisher Test to see if the frequency of that AA in the substrate background frequency is different than the frequency in the Positive Substrates
     #remember that the frequency in the Positive Substrates is determined by the percent table
+    fishermatrix<-matrix(data=c(PercentTable[rowas,colams],nrow(substrates),SumSBF[rowas,colams],(totalmotifs-number_replaced)),nrow = 2)
+    thetest<-fisher.test(x=fishermatrix)
     fisheroddstable[rowas,colams]<-thetest$estimate
     fisherpvalstable[rowas,colams]<-thetest$p.value
     fisherpvalstableadjusted[rowas,colams]<-p.adjust(p=thetest$p.value,method = "fdr",n=21*15)
@@ -614,6 +601,7 @@ fisherpvalstableadjusted<-cbind.data.frame(theletters,fisherpvalstableadjusted)
 
 fisherupdown<-fisheroddstable
 
+#determine which of the Fisher Odds found were actually significant
 for (x in 1:21) {
   for (y in 2:16) {
     theval<-1
@@ -623,10 +611,10 @@ for (x in 1:21) {
       theval<-testval
     }
     fisherupdown[x,y]<-theval
-    #determine which of the Fisher Odds found were actually significant
   }
 }
 
+#output files
 write.table(x="Fisher Odds, only significant ones",file = SDtableAndPercentTable, append = TRUE,sep = ",",col.names = FALSE,row.names = FALSE)
 write.table(x=fisherupdown,file = SDtableAndPercentTable, append = TRUE,sep = ",",col.names = FALSE,row.names = FALSE)
 write.table(x="Fisher Odds",file = SDtableAndPercentTable, append = TRUE,sep = ",",col.names = FALSE,row.names = FALSE)
@@ -645,16 +633,15 @@ numberofPY<-numberofPY[!is.na(numberofPY)]
 NormalizationScore<-sum(numberofPY)/sum(numberofY)
 NormalizationScore<-c("Normalization Score",NormalizationScore)
 write.table(NormalizationScore, file = SiteSelectivityTable_EndogenousProbabilityMatrix_NormalizationScore_CharacterizationTable, append = TRUE,sep = ",",row.names = FALSE, col.names = FALSE)
-#output files
 
 
+#take the Fisher Odds table but only that those odds, remove the labels that I put of them
 bareSDs<-fisherupdown[1:20,2:16]
 bareSDs[20,8]<-3
 bareSDs[3:4,2]<-1
 bareSDs[3:4,4]<-1
 bareSDs[3:4,9]<-1
 bareSDs[3:4,13:14]<-1
-#take the Fisher Odds table but only that those odds, remove the labels that I put of them
 
 bareSDs[20,8]<-1
 
@@ -681,10 +668,10 @@ V=18
 W=19
 Y=20
 
-aa_props <- c("A"=A, "C"=C, "D"=D, "E"=E, "F"=F,"G"=G,"H"=H,"I"=I,"K"=K,"L"=L,"M"=M,"N"=N,"P"=P,"Q"=Q,"R"=R,
-              "S"=S,"T"=T,"V"=V,"W"=W,"Y"=Y,"xY"=Y,"O"=21)
 #this function converts letters to a number based on the equalities that I have written above
 #so aa_props(c(A,C,D)) will give c(1,2,3) as an answer
+aa_props <- c("A"=A, "C"=C, "D"=D, "E"=E, "F"=F,"G"=G,"H"=H,"I"=I,"K"=K,"L"=L,"M"=M,"N"=N,"P"=P,"Q"=Q,"R"=R,
+              "S"=S,"T"=T,"V"=V,"W"=W,"Y"=Y,"xY"=Y,"O"=21)
 
 ThisKinTable<-fisheroddstable
 
@@ -746,6 +733,7 @@ positivewithscores<-cbind.data.frame(positivesubstrates,PositiveScores,PositiveW
 SetOfAAs<-c("Letter","A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y")
 SumOfSigmaAAs<-c(1:15)
 
+#this creates the Sum Of Sigmas value, also from the KINATEST-ID paper
 for (i in 1:15){
   SumOfSigmasValue<-0
   for (j in 1:20){
@@ -758,7 +746,6 @@ for (i in 1:15){
   }
   SumOfSigmaAAs[i]<-SumOfSigmasValue
 }
-#this creates the Sum Of Sigmas value, also from the KINATEST-ID paper
 
 threshold<-c(1:100,(1:9)/10,(1:9)/100,0,-.1)
 threshold<-threshold[order(threshold,decreasing = TRUE)]
@@ -786,8 +773,7 @@ for (z in 1:120) {
   Truepositives[z]<-length(PositiveWeirdScores[PositiveWeirdScores>=(thres)])
   Falsenegatives[z]<-nrow(positivesubstrates)-Truepositives[z]
   Sensitivity[z]<-Truepositives[z]/(Falsenegatives[z]+Truepositives[z])
-  TrueNegatives[z]<-length(NegativeWeirdScores[NegativeWeirdScores<(thres)])
-  # at thresh 100 this should be 0, because it is total minus true negatives
+  TrueNegatives[z]<-length(NegativeWeirdScores[NegativeWeirdScores<(thres)])  # at thresh 100 this should be 0, because it is total minus true negatives
   FalsePositives[z]<-nrow(NegativeSubstrateList)-TrueNegatives[z]
   One_Minus_Specificity[z]<-1-(TrueNegatives[z]/(FalsePositives[z]+TrueNegatives[z]))
   Accuracy[z]<-100*(Truepositives[z]+TrueNegatives[z])/(Falsenegatives[z]+FalsePositives[z]+TrueNegatives[z]+Truepositives[z])
@@ -807,10 +793,9 @@ positivewithscores<-rbind.data.frame(positiveheader,positivewithscores)
 negativeheader<-c("Substrate","RPMS","PMS")
 colnames(NegativeWithScores)<-negativeheader
 
+#write the output files
 write.table(x=c("Characterzation Table"),file = FILENAME2, col.names = FALSE,row.names = FALSE, append = TRUE,sep = ",")
 write.table(Characterization,file = FILENAME2, col.names = TRUE,row.names = FALSE, append = TRUE,sep = ",")
-#write the output files
 
-
-options(warn = oldw)
 #reset the warning option
+options(warn = oldw)
